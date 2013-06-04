@@ -1,2 +1,2 @@
 rgbcdump:
-	gcc main.c -lm -Wall /usr/local/lib/libbmp.a -std=c99 -o rgbcdumper
+	gcc main.c -Wall -std=c99 -o rgbcdumper
