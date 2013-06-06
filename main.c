@@ -33,8 +33,9 @@
 #define WIDTH_THUMB 4
 #define HEIGHT_THUMB 4
 
-#define PIXELES 8	//Cant of pixels per row and column
+#define PIXELES 8		// Cant of pixels per row and column
 #define CANT_PICS 30
+#define HEADER_SIZE 70	// Size in bytes of bmp header+palette
 
 typedef unsigned char c, byte;
 void extractToBuff(FILE *input, int **bmpBuff, int altoTile, int anchoTile); // It needs height and width for extracting thumbnails or full size
@@ -74,7 +75,7 @@ int main(int argc, char **argv) {
 	}
 
 	
-// Set's vars acording to photo size
+// Sets vars acording to photo size
 	if(!thumbnailflag){
 		fseek(input,0x2000,SEEK_SET); // Seek 1º photo
 		step = 0x200;
@@ -91,14 +92,14 @@ int main(int argc, char **argv) {
 	
 // Extracts photos
 	byte *header = createHeader(thumbnailflag);	
-	int **bmpBuff = (int **)malloc(sizeof(int*) * (height*PIXELES));	// This stores the pic data before it get's printed to the file
+	int **bmpBuff = (int **)malloc(sizeof(int*) * (height*PIXELES));	// This stores the pic data before it gets printed to the file
 	for(int i=0; i< height*PIXELES; bmpBuff[i++] =  (int *)malloc(sizeof(int) * (width*PIXELES)));
 
 	for(int i=0; i< CANT_PICS; i++, fseek(input,step,SEEK_CUR)){
-		int blank = isBlank(bmpBuff,height,width);
+		int blank;
 		extractToBuff(input,bmpBuff,height,width);
 		
-		if(!blank){
+		if(!(blank = isBlank(bmpBuff,height,width))){
 			FILE *output;
 			char tmpName[30], index[2];
 			
@@ -106,13 +107,13 @@ int main(int argc, char **argv) {
 			strcat(strcat(strcpy(tmpName,name),index),".bmp");
 			output = fopen(tmpName,"wb");
 			
-			fwrite(header,70,1,output);
+			fwrite(header,HEADER_SIZE,1,output);
 			printToFile(output,bmpBuff,height,width);
 			
 			fclose(output);
 			printf("%s dumped.\n",tmpName);
 		}
-//		else break; // I'm not sure if the first blank means that from that point on all will be blank
+		else break; // I'm not sure if the first blank means that from that point on all will be blank
 	}
 	
 // Freeing 'n closing	
@@ -171,10 +172,9 @@ void printToFile(FILE *output,int **bmpBuff, int altoTile, int anchoTile){
 		}
 }
 
-byte *createHeader(char thumbnailFlag){
-	int headerSize = 70;
-	byte *header=(byte *)malloc(headerSize);
-	for(int i=0; i<headerSize; i++){
+byte *createHeader(char thumbnailFlag){	
+	byte *header=(byte *)malloc(sizeof(byte*)*HEADER_SIZE);
+	for(int i=0; i<HEADER_SIZE; i++){
 		switch(i){
 			case 0:		// Signature | 2 bytes
 				header[i] = 0x42; break;
