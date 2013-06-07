@@ -33,7 +33,7 @@
 #define WIDTH_THUMB 4
 #define HEIGHT_THUMB 4
 
-#define PIXELES 8	// Cant of pixels per row and column
+#define PIXELES 8		// Cant of pixels per row and column
 #define CANT_PICS 30
 #define HEADER_SIZE 70	// Size in bytes of bmp header+palette
 
@@ -47,47 +47,49 @@ void printHelp();
 int main(int argc, char **argv) {
     FILE *input;
     char thumbnailflag = 0;
-    char name[20];			// Name without path nor extension	
+    char name[20];		// Name without path nor extension	
     int step;			// Distance between photos
     int height, width;
 
 // Validate Arguments
     if(!(argc-1) || !strcmp("--help",argv[1]) || !strcmp("-h",argv[1])){
-	printHelp();
-	exit(0);
-    }	
+		printHelp();
+		exit(0);
+    }
+	
     input = fopen(argv[1],"rb");
+	
     if(!input){			
-	printHelp();
-	printf("\nSTATUS:\tError opening input file.\n\n");
-	exit(0);
+		printHelp();
+		printf("\nSTATUS:\tError opening input file.\n\n");
+		exit(0);
     }
     if(argc > 2){
-	if(!strcmp("--thumbnail",argv[2]))
-		thumbnailflag = 1;
-	else 
-		strcpy(name,argv[2]);
-    }
-    else{
-	printHelp();
-	printf("\nSTATUS:\tOutput name missing.\n\n");
-	exit(0);
+		if(!strcmp("--thumbnail",argv[2]))
+			thumbnailflag = 1;
+		else 
+			strcpy(name,argv[2]);
+	}
+	else{
+		printHelp();
+		printf("\nSTATUS:\tOutput name missing.\n\n");
+		exit(0);
     }
 
 
 // Sets vars acording to photo size
     if(!thumbnailflag){
-	fseek(input,0x2000,SEEK_SET); // Seek 1º photo
-	step = 0x200;
-	height = HEIGHT;
-	width = WIDTH;
+		fseek(input,0x2000,SEEK_SET); // Seek 1º photo
+		step = 0x200;
+		height = HEIGHT;
+		width = WIDTH;
     }
     else{
-	fseek(input,0x2e00,SEEK_SET); // Seek 1º photo
-	step = 0xF00;
-	height = HEIGHT_THUMB;
-	width = WIDTH_THUMB;
-	strcpy(name,"thumb_");
+		fseek(input,0x2e00,SEEK_SET); // Seek 1º photo
+		step = 0xF00;
+		height = HEIGHT_THUMB;
+		width = WIDTH_THUMB;
+		strcpy(name,"thumb_");
     }
 
 // Extracts photos
@@ -96,24 +98,24 @@ int main(int argc, char **argv) {
     for(int i=0; i< height*PIXELES; bmpBuff[i++] =  (int *)malloc(sizeof(int) * (width*PIXELES)));
 
     for(int i=0; i< CANT_PICS; i++, fseek(input,step,SEEK_CUR)){
-	int blank;
-	extractToBuff(input,bmpBuff,height,width);
+		int blank;
+		extractToBuff(input,bmpBuff,height,width);
 
-	if(!(blank = isBlank(bmpBuff,height,width))){
-	    FILE *output;
-	    char tmpName[30], index[2];
+		if(!(blank = isBlank(bmpBuff,height,width))){
+			FILE *output;
+			char tmpName[30], index[2];
 
-	    sprintf(index, "%d", i+1);
-	    strcat(strcat(strcpy(tmpName,name),index),".bmp");
-	    output = fopen(tmpName,"wb");
+			sprintf(index, "%d", i+1);
+			strcat(strcat(strcpy(tmpName,name),index),".bmp");
+			output = fopen(tmpName,"wb");
 
-	    fwrite(header,HEADER_SIZE,1,output);
-	    printToFile(output,bmpBuff,height,width);
+			fwrite(header,HEADER_SIZE,1,output);
+			printToFile(output,bmpBuff,height,width);
 
-	    fclose(output);
-	    printf("%s dumped.\n",tmpName);
-	}
-	else break; // I'm not sure if the first blank means that from that point on all will be blank
+			fclose(output);
+			printf("%s dumped.\n",tmpName);
+		}
+		else break; // I'm not sure if the first blank means that from that point on all will be blank
     }
 
 // Freeing 'n closing	
@@ -131,19 +133,19 @@ void extractToBuff(FILE *input, int **bmpBuff, int altoTile, int anchoTile){
     char buff[2];
 
     for(alto=0; alto < altoTile; alto++)								// Width in tiles	
-	for(ancho=0; ancho < anchoTile; ancho++)						// Height en tiles
-	    for(inAlto=0; inAlto < PIXELES; inAlto++){					// Each pixel coordinate Y
-		fread(buff,2,1,input);	// Reads 8px that compose the tile row
-		int z = 128;		// Bit mask 1000 0000
+		for(ancho=0; ancho < anchoTile; ancho++)						// Height en tiles
+			for(inAlto=0; inAlto < PIXELES; inAlto++){					// Each pixel coordinate Y
+				fread(buff,2,1,input);	// Reads 8px that compose the tile row
+				int z = 128;		// Bit mask 1000 0000
 
-		for(inAncho=0; inAncho < PIXELES ; inAncho++, z>>=1){	// Each pixel coordinate X
-		    int color = ((*buff & z) == z) * 2 + ((*(buff + 1) & z) == z);
-		    x = inAncho+(ancho*PIXELES);
-		    y = inAlto+(alto*PIXELES);
+				for(inAncho=0; inAncho < PIXELES ; inAncho++, z>>=1){	// Each pixel coordinate X
+					int color = ((*buff & z) == z) * 2 + ((*(buff + 1) & z) == z);
+					x = inAncho+(ancho*PIXELES);
+					y = inAlto+(alto*PIXELES);
 
-		    bmpBuff[y][x] = color;	// Writes the pixel into the buffer
-		}
-	    }
+					bmpBuff[y][x] = color;	// Writes the pixel into the buffer
+				}
+			}
 }
 
 int isBlank(int **bmpBuff, int altoTile, int anchoTile){
@@ -151,11 +153,11 @@ int isBlank(int **bmpBuff, int altoTile, int anchoTile){
     int blank=1;
 
     for(int y = col; y >= 0 && blank; y--)
-	for(int x = 0; x < anchoTile*PIXELES; x+=2)
-	    if(blank && (bmpBuff[y][x] || bmpBuff[y][x+1])){
-		blank = 0;	//not a blank
-		break;
-	    }
+		for(int x = 0; x < anchoTile*PIXELES; x+=2)
+			if(blank && (bmpBuff[y][x] || bmpBuff[y][x+1])){
+				blank = 0;	//not a blank
+				break;
+			}
     return blank;
 }
 
@@ -164,10 +166,10 @@ void printToFile(FILE *output,int **bmpBuff, int altoTile, int anchoTile){
     int col = (altoTile == 4)? 27:(altoTile*PIXELES)-1;	// Set height according to thumbnail or full size
 
     for(int y = col; y >= 0; y--)
-	for(int x = 0; x < anchoTile*PIXELES; x+=2){
-	    int byte = colors[bmpBuff[y][x]] << 4 | colors[bmpBuff[y][x+1]];	// Make 1 byte from 2px
-	    fputc(byte,output);
-	}
+		for(int x = 0; x < anchoTile*PIXELES; x+=2){
+			int byte = colors[bmpBuff[y][x]] << 4 | colors[bmpBuff[y][x+1]];	// Make 1 byte from 2px
+			fputc(byte,output);
+		}
 }
 
 byte *createHeader(char thumbnailFlag){	
